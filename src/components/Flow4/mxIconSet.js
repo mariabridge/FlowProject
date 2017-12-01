@@ -1,12 +1,9 @@
-import { FlowPopup } from "../../actions/flowHowActions";
 
-var toolTips = [];
 // Defines a new class for all icons
 export function mxIconSet(state) {
 
 	let img;
-	const label = state.cell.getAttribute("title", "");
-	
+
 	this.images = [];
 	const graph = state.view.graph;
 
@@ -36,7 +33,7 @@ export function mxIconSet(state) {
 	// this.images.push(img);
 
 	// Delete
-	img = mxUtils.createImage("../../assets/images/cross.svg");
+	img = mxUtils.createImage("./assets/images/cross.svg");
 	img.setAttribute("title", "Delete");
 	img.style.position = "absolute";
 	img.style.cursor = "pointer";
@@ -45,53 +42,23 @@ export function mxIconSet(state) {
 	img.style.left = (state.x + state.width - 20) + "px";
 	img.style.top = (state.y + 4) + "px";
 
-
 	mxEvent.addGestureListeners(img,
 		mxUtils.bind(this, function(evt) {
 			// Disables dragging the image
 			mxEvent.consume(evt);
 		})
 	);
-	
-	
-		
+
 	mxEvent.addListener(img, "click",
 		mxUtils.bind(this, function(evt) {
-			if(state.cell.style == "flow" && window.summaryClass){
-				var flow_title = state.cell.value.getAttribute("title");
-				FlowPopup(flow_title, window.summaryClass)
-			}else{
-				graph.removeCells([state.cell]);
-				mxEvent.consume(evt);
-				this.destroy();
-			}
-
+			graph.removeCells([state.cell]);
+			mxEvent.consume(evt);
+			this.destroy();
 		})
 	);
 
 	state.view.graph.container.appendChild(img);
 	this.images.push(img);
-}
-
-export function mxTooltipSet(state) {
-	let toolTip;
-	const graph = state.view.graph;
-	const label = mxGraph.prototype.retunLabel(state.cell);
-	
-	if(label && label.length > 10 ){
-		
-		toolTip = document.createElement('div');
-		toolTip.setAttribute("title", "Tooltip");
-		toolTip.style.position = "absolute";
-		toolTip.style.cursor = "pointer";
-		toolTip.className = "tooltip_container";
-		toolTip.style.left = (state.x + state.width + 50) + "px";
-		toolTip.style.top = (state.y + -13) + "px";
-		mxUtils.write(toolTip,label);
-
-		state.view.graph.container.appendChild(toolTip);
-		toolTips.push(toolTip);
-	}
 }
 
 mxIconSet.prototype.destroy = function() {
@@ -105,24 +72,12 @@ mxIconSet.prototype.destroy = function() {
 	this.images = null;
 };
 
-mxIconSet.prototype.toolTipdestroy = function() {
-	if (toolTips.length >0) {
-		for (let i = 0; i < toolTips.length; i++) {
-			const img = toolTips[i];
-			img.parentNode.removeChild(img);
-		}
-	}	
-	toolTips = [];	
-};
-
-
 export function initMxIconSet(graph) {
 	const iconTolerance = 20;
 
 	graph.addMouseListener({
 		currentState: null,
 		currentIconSet: null,
-		//currentIconTooltip:null,
 		mouseDown: function(sender, me) {
 			// Hides icons on mouse down
 			if (this.currentState !== null) {
@@ -137,17 +92,7 @@ export function initMxIconSet(graph) {
         	// Dont show icons if it's a label
         	if (cell) {
 				const isLabel = typeof(cell.getValue()) === "string";
-        		if (isLabel) {
-					if (this.currentIconTooltip !== null) {
-						mxIconSet.prototype.toolTipdestroy();
-						this.currentIconTooltip = null;
-					}
-					if (this.currentIconTooltip === null) {
-						this.currentIconTooltip = new mxTooltipSet(me.getState());
-					}
-					return;
-				}
-				
+        		if (isLabel) return;
         	}
 
 			if (this.currentState !== null && (me.getState() === this.currentState || me.getState() === null)) {
@@ -179,12 +124,7 @@ export function initMxIconSet(graph) {
 				}
 			}
 		},
-		mouseUp: function() { 
-			if (this.currentIconTooltip !== null) {
-				mxIconSet.prototype.toolTipdestroy();
-				this.currentIconTooltip = null;
-			}
-		},
+		mouseUp: function() { },
 		dragEnter: function(evt, state) {
 			if (this.currentIconSet === null) {
 				this.currentIconSet = new mxIconSet(state);
@@ -195,10 +135,6 @@ export function initMxIconSet(graph) {
 				this.currentIconSet.destroy();
 				this.currentIconSet = null;
 			}
-			if (this.currentIconTooltip !== null) {
-				mxIconSet.prototype.toolTipdestroy();
-				this.currentIconTooltip = null;
-			}
-		}
+		},
 	});
 }

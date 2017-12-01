@@ -50,18 +50,3 @@ img.profile-picture {
   }
 }
 
-.dropdown-toggle{
-  background: none !important;
-  border: 1px solid;
-  cursor: pointer;
-  padding: 0.5em 3em;
-}
-.dropdown-menu{
-  background: #777 !important;
-  box-shadow: unset !important;
-  a{
-    &:hover{
-      background: #8E8D8D !important;
-    }
-  }
-}
