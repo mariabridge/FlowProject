@@ -1,0 +1,30 @@
+/* ChangeColorStyle.scss */
+
+
+@import './commons.scss';
+
+.change-color-container{	
+	
+	display:flex;
+	justify-content:center;
+	align-items:center;
+	height: 60px;
+
+	.change-color-dot{
+		width: 30px;
+		height:30px;
+		cursor: pointer;
+
+		border: 2px solid white;
+		transition: all 0.2s ease-in-out;
+		background: red;
+		margin: 10px;
+		border-radius: 9999px;
+		display:inline-flex;
+
+		&:hover, &.active{
+			width: 40px;
+			height:40px;
+		}
+	}
+}

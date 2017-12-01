@@ -1,0 +1,40 @@
+
+/* LinkStyle.scss */
+
+
+@import './commons';
+
+.link{
+	display: inline-block;
+	color: white;
+	letter-spacing: 2px;	
+	padding:20 30px;
+	border: 2px solid white;
+	transition: all 0.1s linear;
+	border-radius: 3px;
+	text-decoration: none;
+	&:hover{
+		color: white;
+		text-decoration: none;
+		background-color: transparent;
+	}
+	.link-signin{
+		width: 200px;
+	}
+}
+
+.link-header{
+	margin-top: 8px !important;
+	margin-bottom: 8px !important;
+	padding: 5px 40px;
+}
+
+.no-border{
+	border:0px;
+}
+
+.filled{
+	color: rgba(0,0,0,0.6);
+	background: white;
+}
+

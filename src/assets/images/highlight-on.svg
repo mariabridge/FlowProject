@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Generator: Adobe Illustrator 19.0.0, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
+<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+	 viewBox="0 0 512 512" style="enable-background:new 0 0 512 512;" xml:space="preserve">
+<style type="text/css">
+	.st0{display:none;}
+	.st1{display:inline;fill:#7D7D7D;}
+	.st2{fill:none;stroke:#FFFFFF;stroke-width:19;stroke-miterlimit:10;}
+	.st3{fill:#FFFFFF;stroke:#FFFFFF;stroke-miterlimit:10;}
+	.st4{fill:#FFFFFF;stroke:#FFFFFF;stroke-width:42;stroke-miterlimit:10;}
+	.st5{fill:none;stroke:#FFFFFF;stroke-width:27;stroke-miterlimit:10;}
+</style>
+<g id="Layer_3" class="st0">
+	<rect id="XMLID_6_" x="-3" y="-1.5" class="st1" width="515" height="511"/>
+</g>
+<g id="Layer_2">
+	<g id="XMLID_7_">
+		<line id="XMLID_1_" class="st2" x1="201" y1="399" x2="310.5" y2="399"/>
+		<line id="XMLID_4_" class="st2" x1="201" y1="438" x2="310.5" y2="438"/>
+		<polygon id="XMLID_5_" class="st3" points="214,465 297,465 271.5,484.5 241.5,484.5 		"/>
+	</g>
+	<path id="XMLID_3_" class="st4" d="M221.7,369.7c0-38-36.7-74.7-50.7-120.7s-22-135.3,85-135.3S355,203,341,249
+		s-50.7,82.7-50.7,120.7"/>
+	<g id="XMLID_13_">
+		<line id="XMLID_8_" class="st5" x1="65" y1="203" x2="113" y2="203"/>
+		<line id="XMLID_9_" class="st5" x1="121.5" y1="68.5" x2="155.5" y2="102.5"/>
+		<line id="XMLID_10_" class="st5" x1="256" y1="26.5" x2="256" y2="74.5"/>
+		<line id="XMLID_12_" class="st5" x1="446.5" y1="203" x2="398.5" y2="203"/>
+		<line id="XMLID_11_" class="st5" x1="389.9" y1="68.5" x2="356" y2="102.5"/>
+	</g>
+</g>
+</svg>

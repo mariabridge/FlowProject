@@ -1,0 +1,175 @@
+/* RegisterStyle.scss */
+
+@import './commons';
+*,
+*:before,
+*:after {
+    -moz-box-sizing: border-box;
+}
+
+.background {
+    backgroung-color: #2F74B9 !important;
+}
+
+.register_btn {
+    margin: 0 !important;
+    width: 300px !important;
+    display: block;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    @media (max-width: 360px) {
+        width: 290px !important;
+    }
+}
+
+.btn-register-in {
+    border: 1px solid #d8d9da !important;
+    width: 85px !important;
+    height: 80px;
+    background-color: transparent !important;
+}
+
+.register_btn input {
+    background: rgba(255, 255, 255, .3);
+    color: rgba(255, 255, 255, .5);
+    border: 0;
+    -moz-box-sizing: unset;
+    font-weight: 600;
+    font-size: 14px;
+    &::-webkit-input-placeholder {
+        /* Chrome/Opera/Safari */
+        color: rgba(255, 255, 255, .5);
+         font-size: 14px;
+    }
+    &::-moz-placeholder {
+        /* Firefox 19+ */
+        color: rgba(255, 255, 255, .5);
+         font-size: 14px;
+    }
+    &:-ms-input-placeholder {
+        /* IE 10+ */
+        color: rgba(255, 255, 255, .5);
+         font-size: 14px;
+    }
+    &:-moz-placeholder {
+        /* Firefox 18- */
+        color: rgba(255, 255, 255, .5);
+         font-size: 14px;
+    }
+    &:focus {
+        background: rgba(255, 255, 255, .5);
+        color: rgba(255, 255, 255, 1);
+        box-shadow: unset;
+        &::-webkit-input-placeholder {
+            color: rgba(255, 255, 255, 1);
+        }
+        &::-webkit-input-placeholder {
+            color: rgba(255, 255, 255, 1);
+        }
+        /* Firefox < 19 */
+        &:-moz-placeholder {
+            color: rgba(255, 255, 255, 1);
+        }
+        &:-moz-placeholder {
+            color: rgba(255, 255, 255, 1);
+        }
+        /* Firefox > 19 */
+        &::-moz-placeholder {
+            color: rgba(255, 255, 255, 1);
+        }
+        &::-moz-placeholder {
+            color: rgba(255, 255, 255, 1);
+        }
+        /* Internet Explorer 10 */
+        &:-ms-input-placeholder {
+            color: rgba(255, 255, 255, 1);
+        }
+        &:-ms-input-placeholder {
+            color: rgba(255, 255, 255, 1);
+        }
+    }
+}
+.register_btn .btn-register-btn {
+    border-radius: 3px !important;
+    color: #2d72ad !important;
+    span {
+        font-size: 22px;
+        margin-left: 10px;
+        color: #2d72ae;
+    }
+}
+
+.btn-register-in svg {
+    font-size: 25px !important;
+}
+.btn-register-in.facebook-radius svg {
+    border-radius: 10px;
+}
+.register_title {
+    font-size: 38;
+}
+
+.register_btn .btn-register-in {
+    margin: 0px !important;
+    margin-right: 20px !important;
+    @media (max-width: 360px) {
+        margin-right: 16px !important;
+    }
+}
+
+.register_btn .last-btn-register {
+    margin: 0px !important;
+    margin-right: 0px !important;
+}
+
+.btn-register-in {
+    font-size: 22px;
+    padding: 30px 50px;
+    margin: 5px;
+    width: auto;
+    letter-spacing: 2px;
+    background-color: rgba(255, 255, 255, 0.3);
+    text-align: left;
+    span {
+        color: rgba(255, 255, 255, 0.6);
+        padding-left: 20px;
+    }
+    &:hover {
+        color: rgba(255, 255, 255, 1.0);
+    }
+}
+
+.register_btn {
+    margin: 0 35%;
+    .errorClass{
+        color: #ca2020 !important;
+    }    
+    input {
+        padding: 1.7em;
+        border-radius: 0;
+    }
+    .btn-register-btn {
+        padding: 1em;
+        width: 100%;
+        background: white;
+        color: black;
+    }
+    a {
+        color: white;
+    }
+    a:hover,
+    a:focus {
+        color: white;
+        text-decoration: none;
+    }
+    .link-header {
+        span {
+            font-size: 11px;
+            font-weight: 600;
+        }
+    }
+    .link-header-text {
+        font-size: 11px;
+        font-weight: 600;
+    }
+}

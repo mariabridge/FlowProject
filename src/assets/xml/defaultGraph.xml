@@ -1,0 +1,118 @@
+<mxGraphModel>
+  <root>
+    <mxCell id="0"/>
+    <mxCell id="1" parent="0"/>
+    <mxCell id="microServiceLayer" parent="1"/>
+    <Experience nodeType="MicroFlow" title="MicroFlow" id="22">
+      <mxCell style="microflow" parent="microServiceLayer" vertex="1">
+        <mxGeometry x="218.54009433962256" y="164.69056603773583" width="100" height="86" as="geometry">
+          <mxRectangle width="120" height="40" as="alternateBounds"/>
+        </mxGeometry>
+      </mxCell>
+    </Experience>
+    <mxCell id="23" value="MicroFlow" style="title2" parent="22" vertex="1" connectable="0">
+      <mxGeometry x="0.5" y="0.85" relative="1" as="geometry"/>
+    </mxCell>
+    <Process nodeType="MicroFlow" title="MicroFlow" id="24">
+      <mxCell style="microflow" parent="microServiceLayer" vertex="1">
+        <mxGeometry x="218.54009433962256" y="295.5396226415094" width="100" height="86" as="geometry">
+          <mxRectangle width="120" height="40" as="alternateBounds"/>
+        </mxGeometry>
+      </mxCell>
+    </Process>
+    <mxCell id="25" value="MicroFlow" style="title2" parent="24" vertex="1" connectable="0">
+      <mxGeometry x="0.5" y="0.85" relative="1" as="geometry"/>
+    </mxCell>
+    <Information nodeType="MicroFlow" title="MicroFlow" id="26">
+      <mxCell style="microflow" parent="microServiceLayer" vertex="1">
+        <mxGeometry x="218.54009433962256" y="428.68679245283016" width="100" height="86" as="geometry">
+          <mxRectangle width="120" height="40" as="alternateBounds"/>
+        </mxGeometry>
+      </mxCell>
+    </Information>
+    <mxCell id="27" value="MicroFlow" style="title2" parent="26" vertex="1" connectable="0">
+      <mxGeometry x="0.5" y="0.85" relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="31" value="" parent="microServiceLayer" source="24" target="26" edge="1">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="33" value="" parent="microServiceLayer" source="24" target="22" edge="1">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="flowLayer" parent="1" visible="0"/>
+    <Flow nodeType="Information" title="Flow" id="2">
+      <mxCell style="flow" parent="flowLayer" vertex="1">
+        <mxGeometry x="218.5400943396226" y="306.2943396226415" width="100" height="86" as="geometry">
+          <mxRectangle width="120" height="40" as="alternateBounds"/>
+        </mxGeometry>
+      </mxCell>
+    </Flow>
+    <mxCell id="3" value="Flow" style="title2" parent="2" vertex="1" connectable="0">
+      <mxGeometry x="0.5" y="0.85" relative="1" as="geometry"/>
+    </mxCell>
+    <Target nodeType="App" title="Target" id="4">
+      <mxCell style="target" parent="1" vertex="1">
+        <mxGeometry x="218.54009433962256" y="6.139622641509433" width="100" height="86" as="geometry">
+          <mxRectangle width="120" height="40" as="alternateBounds"/>
+        </mxGeometry>
+      </mxCell>
+    </Target>
+    <mxCell id="5" value="Target" style="title2" parent="4" vertex="1" connectable="0">
+      <mxGeometry x="0.5" y="0.85" relative="1" as="geometry"/>
+    </mxCell>
+    <Source nodeType="App" title="Source" id="6">
+      <mxCell style="source" parent="1" vertex="1">
+        <mxGeometry x="100.54009433962261" y="573.8339622641508" width="100" height="86" as="geometry">
+          <mxRectangle width="120" height="40" as="alternateBounds"/>
+        </mxGeometry>
+      </mxCell>
+    </Source>
+    <mxCell id="7" value="Source" style="title2" parent="6" vertex="1" connectable="0">
+      <mxGeometry x="0.5" y="0.85" relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="8" value="" parent="1" source="4" target="2" edge="1">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="9" value="" parent="1" source="2" target="6" edge="1">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <Source nodeType="App" title="Source" id="10">
+      <mxCell style="source" parent="1" vertex="1">
+        <mxGeometry x="218.74929245283016" y="573.8339622641508" width="100" height="86" as="geometry">
+          <mxRectangle width="120" height="40" as="alternateBounds"/>
+        </mxGeometry>
+      </mxCell>
+    </Source>
+    <mxCell id="11" value="Source" style="title2" parent="10" vertex="1" connectable="0">
+      <mxGeometry x="0.5" y="0.85" relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="12" value="" parent="1" source="10" target="2" edge="1">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <Source nodeType="App" title="Source" id="13">
+      <mxCell style="source" parent="1" vertex="1">
+        <mxGeometry x="331.61721698113206" y="573.8339622641508" width="100" height="86" as="geometry">
+          <mxRectangle width="120" height="40" as="alternateBounds"/>
+        </mxGeometry>
+      </mxCell>
+    </Source>
+    <mxCell id="14" value="Source" style="title2" parent="13" vertex="1" connectable="0">
+      <mxGeometry x="0.5" y="0.85" relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="15" value="" parent="1" source="13" target="2" edge="1">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="28" value="" parent="1" source="26" target="10" edge="1">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="29" value="" parent="1" source="13" target="26" edge="1">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="30" value="" parent="1" source="6" target="26" edge="1">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    <mxCell id="32" value="" parent="1" source="22" target="4" edge="1">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+  </root>
+</mxGraphModel>

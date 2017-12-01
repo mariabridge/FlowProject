@@ -1,0 +1,39 @@
+/* LoginStyle.scss */
+
+@import './commons';
+
+.dashboard{
+    li{
+        list-style-type: none;
+    }
+    .project_box{
+        list-style-type: none;
+        padding: 1em;
+        text-align: left;
+    }
+    .project_list{
+        background: #afafaf69;
+        padding: 1em;
+        height: 150px;
+        cursor: pointer;
+    }
+    h5{
+        font-size: 20px;
+        font-weight: bolder;
+        font-family: sans-serif;
+    }
+    h6{
+        font-size: 14px;
+        opacity: 0.58;
+    }
+    h4{
+        font-size: 20px;
+        opacity: 0.58;
+    }
+    img{
+        width: 30px;
+        float: right;
+        opacity: 0.8;
+    }
+    
+}
