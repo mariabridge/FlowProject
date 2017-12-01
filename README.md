@@ -2,7 +2,7 @@
 
 ![Entiros logo](http://www.entiros.se/sites/default/files/entiros_logo_4f_square.png "Entiros logo")
 
-## [Wiki](https://github.com/entiros/FlowChart-mockup/wiki)
+## [Wiki](https://github.com/adamsdm/FlowChart-mockup/wiki)
 
 
 ## About 

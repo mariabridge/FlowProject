@@ -6,7 +6,7 @@ import { forEach } from "lodash";
 
 import { removeFlow } from "../../actions/flowHowActions";
 import { changeHighlighted, changeExpanded } from "../../actions/settingsActions";
-import $ from "jquery";
+
 
 @connect( (store) => {
 	return {
@@ -57,9 +57,9 @@ export default class FlowSummaries extends React.Component {
 		}
 		return null;
 	}
-	
+
 	removeFlow(flowTitle) {
-		
+
 		if( flowTitle === this.props.highlighted ) {
 			this.props.dispatch(changeHighlighted(null));
 		}
@@ -78,11 +78,6 @@ export default class FlowSummaries extends React.Component {
 		});
 
 		localStorage.setItem("flows", JSON.stringify(newFlows) );
-		
-
-		// Remove Popup
-		var element = document.getElementById("removeflow_popup")
-		element.remove();
 	}
 }
 
