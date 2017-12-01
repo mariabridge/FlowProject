@@ -639,7 +639,6 @@ export default class FlowGraph {
 									var source_ =  (cell.getEdgeAt(i)).source;
 									var target_ =  (cell.getEdgeAt(i)).target;
 
-									//console.log(cell)
 									//console.log(source_)
 									//console.log(target_)
 									//console.log(source_.style)
