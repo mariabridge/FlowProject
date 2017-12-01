@@ -1,11 +1,17 @@
 const _ = require("lodash");
 let boundFitFlag = false;
 let scroll_x = 0;
+let sourceFlag = 0, targetFlag = 0;
 
+import PropTypes from "prop-types";
 import { uniq, forEach, remove, isEmpty } from "lodash";
 import { initMxIconSet } from "./mxIconSet.js";
 import { styleConstants } from "./constants.js";
 import graphUtils from "./utilities.js";
+import axios from "axios";
+import { updateFlows, FlowPopup } from "../../actions/flowHowActions";
+
+import $ from "jquery";
 
 export default class FlowGraph {
 	/**
@@ -18,18 +24,20 @@ export default class FlowGraph {
 			mxUtils.error("Browser is not supported!", 200, false);
 			return null;
 		}
-		
+				
 		mxConstants.MIN_HOTSPOT_SIZE = 1;
 		mxConstants.DEFAULT_HOTSPOT = 16;
 
 		this.editor = new mxEditor();
 		this.graph = this.editor.graph;
 
+		this.graphNodes = [];// For defining nodes
+		this.graphEdges = [];// For defining Edges / Connections
+
 		this.graph.view.fullscreen = false;
 		
 		// Set the graph globaly available
 		window.graph = this.graph;
-
 		window.addEventListener("resize",function(){
 			if(boundFitFlag){
 				const margin = 20;
@@ -53,6 +61,28 @@ export default class FlowGraph {
 		});
 		
 
+		window.addEventListener("resize",function(){
+			if(boundFitFlag){
+				const margin = 20;
+				const max = 3;
+
+				const bounds = this.graph.getGraphBounds();
+				const cw = this.graph.container.clientWidth - margin;
+				const ch = this.graph.container.clientHeight - margin;
+				const w = bounds.width / this.graph.view.scale;
+				const h = bounds.height / this.graph.view.scale;
+				const s = Math.min(max, Math.min(cw / w, ch / h));
+
+				this.graph.view.scaleAndTranslate(s, -100, 100);
+			}
+		});
+
+		document.getElementById("graph_Container").addEventListener("scroll", function () {
+			if(!window.graph.view.fullscreen){
+				var elmnt = document.getElementById("graph_Container");
+				scroll_x = elmnt.scrollLeft;
+			}			
+		});
 
 		this.setupNodeTemplates();
 		this.setupConnectionRestrictions();
@@ -81,16 +111,615 @@ export default class FlowGraph {
 		initMxIconSet(this.graph);
 		this.setupEditorActions();
 
+		var this_ = this;
+		this_.currentvalue;
+
 		// DEBUG: console.log cell on click
 		this.graph.addListener(mxEvent.CLICK, function(sender, evt) {
-			const cell = evt.getProperty("cell");
 
-			if (cell) {
-				console.log(cell);
+			let titleExistsFlag;
+			const cell = evt.getProperty("cell");
+			if (cell && cell.getValue()) {
+				const checkLabel = typeof(cell.getValue()) === "string";
+				if (checkLabel) {
+					
+					/* Change name on flow/app just by clicking on the text in the box */
+					var parent = cell.parent;
+					let old_title = parent.getValue().getAttribute('title');
+					
+					const newTitle = prompt("New title", parent.getAttribute("title", "")) || parent.getAttribute("title", "");
+					
+					let allCells = window.graph.model.cells;
+					for (var key in allCells) {
+						var cell_ = allCells[key];
+
+						if( cell_.getAttribute("title") == newTitle ){
+							titleExistsFlag = true;
+						}
+					}
+
+					if((newTitle != old_title) && titleExistsFlag){
+						alert("Title already exists, Please try other one!")
+					}else{
+						const edit = new mxCellAttributeChange(parent, "title", newTitle);
+						graph.getModel().execute(edit);
+	
+						let flows = JSON.parse(window.localStorage.flows);
+						for (var key in flows) {
+
+							if( flows[key].title == old_title ){
+								let thisFlow = flows[old_title];
+								thisFlow.title = newTitle;
+								delete flows[old_title];
+								flows[newTitle] = thisFlow;
+								
+								this_.refreshFlows(flows);
+							}
+						}
+					}
+				}
 			}
 		});
 
-		this.setupRightClickMenu();
+		
+		/* Cell Moved Event Handler */
+		this.graph.addListener(mxEvent.CELLS_MOVED, function( cells, dx, dy, disconnect, constrain, extend ) {
+			let flows = JSON.parse(localStorage.flows);
+			var xcord = dx.properties.dx;
+			var selectedCells = graph.getSelectionCells();
+			for(var s=0; s<selectedCells.length; s++){
+				if( selectedCells[s].style == "flow" ){
+					var flow_title = selectedCells[s].value.getAttribute("title");
+					let flow = flows[flow_title];
+					var microflows = flow.microflows;
+					for( var m=0; m<microflows.length; m++){
+						var cell = window.graph.model.getCell(microflows[m]);
+						this_.graph.translateCell(cell, xcord, 0, false);
+					}
+				}else if(selectedCells[s].style == "microflow"){
+
+					var node_type = selectedCells[s].value.nodeName+"MicroFlow";
+					cellMoved(node_type);
+					
+					for(var f in flows){
+						for( var mf=0; mf<flows[f].microflows.length; mf++){
+							if( selectedCells[s].id == flows[f].microflows[mf]){
+								var flow_title = flows[f].title;
+								var flow_left = document.getElementById(flow_title).offsetLeft;
+								var cell_left = selectedCells[s].geometry.x*0.86;
+								var flow_right = (document.getElementById(flow_title).offsetLeft)+(document.getElementById(flow_title).offsetWidth);
+								var cell_right = (selectedCells[s].geometry.x*0.86)+(selectedCells[s].geometry.width);
+			
+								if( (flow_left > cell_left) || (flow_right < cell_right) ){
+									this_.graph.translateCell(selectedCells[s], -parseFloat(xcord), 0, false);
+								}
+							}
+						}
+					}
+
+					setTimeout(function() {
+						/** Removed Flow Background */
+						const flow_background = document.getElementsByClassName("background_div");
+						
+						for(let j = flow_background.length; j >= 0; j--) {
+							if(flow_background[j]){
+								flow_background[j].remove();
+							}
+						}
+					}, 1000);
+				}
+			}
+		});
+
+
+		// Add new cell in to the work area
+		this.graph.addListener(mxEvent.CELLS_ADDED, function(cells,parent,index,source,target,absolute) {
+
+			this_.currentvalue = parent.properties.cells[0].value ;
+			var node_name = parent.properties.cells[0].value.nodeName;
+			if(this_.currentvalue == 'Flow'){
+				this_.setupRightClickMenu(this_.currentvalue);
+			}else if( node_name == 'Experience' || node_name == 'Process' || node_name == 'Information' ){
+				/*
+				* 	Adds Microflow in to Flow summary
+				*/
+				var flow_title = $("#selected_flow").find("span").text();
+				var thisCell = parent.properties.cells[0];
+				var cellID = thisCell.id;
+
+				if(flow_title){
+					let flows = JSON.parse(localStorage.flows);
+					let flow = flows[flow_title];
+					flow.microflows.push(cellID);
+					flow.microflows = uniq(flow.microflows);
+					localStorage.setItem("flows", JSON.stringify(flows));
+					
+					this_.setupCellConnect(parent.properties.cells[0], flow_title);
+
+					/*
+					* 	IF the Flow coincide with other Flow the Flow will be moved in to Right back
+					*/
+					$(".background_div").each(function(i, obj) {
+						var background_left = obj.offsetLeft/0.86-20;
+						var background_width = obj.offsetWidth;
+						var background_right = obj.offsetLeft/0.86+background_width;
+						var cell_x;
+
+						/* Find Flows which is positioned in the right of the selected Flow */
+						var selected_left = document.getElementById("selected_flow").offsetLeft/0.86-20 ;
+						var selected_right = (document.getElementById("selected_flow").offsetLeft/0.86) + (document.getElementById("selected_flow").offsetWidth) ;
+						
+						if(obj.id != "selected_flow"){
+							
+							if( selected_left > background_left ){
+								//alert("Left")
+								if((selected_left-100) < background_right){
+									let allCells = window.graph.model.cells;
+									for (var key in allCells) {
+										var cell_ = allCells[key];
+										if( cell_.getAttribute("title") == flow_title ){
+											cell_x = 200;
+											this_.graph.translateCell (cell_, cell_x, 0, false);
+											let flow_data = flows[flow_title];
+											var microflows = flow_data.microflows;
+											for( var m=0; m<microflows.length; m++){
+												var cell = window.graph.model.getCell(microflows[m]);
+												this_.graph.translateCell (cell, cell_x, 0, false);
+											}
+
+										}
+									}
+								}
+							}else{
+								//alert("Right")
+								if((selected_right+100) > background_left || ( selected_left < 0 )){
+									let allCells = window.graph.model.cells;
+
+									if( selected_left-100 > 0 ){
+										cell_x = -200 ;
+									}else{
+										cell_x = 200 ;
+										if((selected_right+100) > background_left){
+											flow_title = $(obj).find("span").text();
+										}
+									}
+																	
+									for (var key in allCells) {
+										var cell_ = allCells[key];
+										if( cell_.getAttribute("title") == flow_title ){
+											this_.graph.translateCell (cell_, cell_x, 0, false);
+											let flow_data = flows[flow_title];
+											var microflows = flow_data.microflows;
+											for( var m=0; m<microflows.length; m++){
+												var cell = window.graph.model.getCell(microflows[m]);
+												this_.graph.translateCell (cell, cell_x, 0, false);
+											}
+										}
+									}
+
+								}
+							}
+
+						}
+
+					});
+				}
+			}
+
+		});
+
+		
+		// Add new connection with the cells
+		this.graph.connectionHandler.addListener(mxEvent.CONNECT, function(sender, evt){
+			
+			//alert("Connect");
+			var edge = evt.getProperty('cell');
+			var source = graph.getModel().getTerminal(edge, true);
+			var target = graph.getModel().getTerminal(edge, false);
+			var flow_title ;
+
+			if(source.style != 'flow'){
+				flow_title = target.value.getAttribute("title")
+			}else{
+				flow_title = source.value.getAttribute("title")
+			}
+
+			/* If any one of the cell target or source become Microflow */
+			if((source.style != "microflow" && target.style == "microflow") || (source.style == "microflow" && target.style != "microflow")){
+				// Add Micro flow Target/Source adds in to Flow Summary
+				let flows = JSON.parse(localStorage.flows);
+				for(var i in flows){
+
+					var value = flows[i].nodeIDs.indexOf(target.id);
+					if(value != -1 || value != "-1"){
+						flow_title = flows[i].title;
+						this_.setupCellConnect(source, flow_title);
+					}
+
+					var value = flows[i].nodeIDs.indexOf(source.id);
+					if(value != -1 || value != "-1"){
+						flow_title = flows[i].title;
+						this_.setupCellConnect(target, flow_title);
+					}
+				}
+			}else if((source.style != "microflow") && (target.style != "microflow")){
+				this_.setupCellConnect(source, flow_title);
+				this_.setupCellConnect(target, flow_title);
+			}
+
+
+			/*
+			*	Cell Connection Checking --------- 
+			*	
+			*/
+
+			if(source.style == "target"){
+				if(target.style == "microflow"){
+					//alert("Connect with Microflow")
+					let allCells = window.graph.model.cells;
+					let source1, target1 ;
+					for (var key in allCells) {
+						var cell_ = allCells[key];
+						if( cell_.getAttribute("title") == flow_title ){
+		
+							if(source.style != "microflow"){
+								
+								source1 = source ;
+								target1 = cell_;
+		
+							}else{
+								
+								source1 = cell_ ;
+								target1 = target;
+		
+							}
+						}
+					}
+
+					if(target1.getEdgeCount() !=0 ){
+						
+						for (var i = 0; i < target1.getEdgeCount(); i++) {
+							var source_ =  (target1.getEdgeAt(i)).source;
+							var target_ =  (target1.getEdgeAt(i)).target;
+			
+							if (source_ == target1 || target_ == target1){
+								// Cells Already connected...........
+								console.log (true);
+							}
+							else{
+								window.graph.connectionHandler.connect( source, target1 );
+							}
+						}
+					}else{
+
+						window.graph.connectionHandler.connect( source, target1 );
+					}
+
+
+				}else{
+					//alert("Connect with Flow")
+					let flows = JSON.parse(window.localStorage.flows);
+					let flow = flows[flow_title];
+					let micro_flows = flow.microflows;
+					for(var m=0; m<micro_flows.length; m++){
+						var cell = window.graph.model.getCell(micro_flows[m]);
+	
+						if(cell.value.nodeName == "Experience"){
+
+							if(cell.getEdgeCount() !=0 ){
+								
+								for (var i = 0; i < cell.getEdgeCount(); i++) {
+									var source_ =  (cell.getEdgeAt(i)).source;
+									var target_ =  (cell.getEdgeAt(i)).target;
+									if (source_ == source || target_ == cell){
+										// Cells Already connected...........
+										console.log (true);
+									}
+									else{
+										window.graph.connectionHandler.connect( source, cell );
+									}
+								}
+							}else{
+
+								window.graph.connectionHandler.connect( source, cell );
+							}
+
+						}
+					}					
+				}
+			}if(target.style == "target"){
+				if(source.style == "microflow"){
+					//alert("MF connected with Target")
+					let allCells = window.graph.model.cells;
+					let source1, target1 ;
+					for (var key in allCells) {
+						var cell_ = allCells[key];
+						if( cell_.getAttribute("title") == flow_title ){
+		
+							if(source.style != "microflow"){
+								
+								source1 = source ;
+								target1 = cell_;
+		
+							}else{
+								
+								source1 = cell_ ;
+								target1 = target;
+		
+							}
+						}
+					}
+
+					if(source1.getEdgeCount() !=0 ){
+						
+						for (var i = 0; i < source1.getEdgeCount(); i++) {
+							var source_ =  (source1.getEdgeAt(i)).source;
+							var target_ =  (source1.getEdgeAt(i)).target;
+			
+							if (source_ == source1 || target_ == source1){
+								// Cells Already connected...........
+								console.log (true);
+							}
+							else{
+								window.graph.connectionHandler.connect( source1, target1 );
+							}
+						}
+					}else{
+
+						window.graph.connectionHandler.connect( source1, target1 );
+					}
+				}
+				else{
+					alert("F connected with Target")
+					let flows = JSON.parse(window.localStorage.flows);
+					let flow = flows[flow_title];
+					let micro_flows = flow.microflows;
+					for(var m=0; m<micro_flows.length; m++){
+						var cell = window.graph.model.getCell(micro_flows[m]);
+	
+						if(cell.value.nodeName == "Experience"){
+
+							if(cell.getEdgeCount() !=0 ){
+								for (var i = 0; i < cell.getEdgeCount(); i++) {
+									var source_ =  (cell.getEdgeAt(i)).source;
+									var target_ =  (cell.getEdgeAt(i)).target;
+					
+									
+									if ((source_ == cell || target_ == cell) && target_.style != "microflow"){
+										// Cells Already connected...........
+										
+										console.log (true);
+									}
+									else{
+										window.graph.connectionHandler.connect( target, cell );
+										return;
+									}
+								}
+							}else{
+
+								window.graph.connectionHandler.connect( target, cell );
+							}
+
+						}
+					}	
+				}
+			}
+			if(source.style == "microflow" && target.style == "microflow"){
+				return;
+			}
+			else if(target.style == "source"){
+				if(source.style == "microflow"){
+					//alert("MF connected with Source")
+					let allCells = window.graph.model.cells;
+					let source1, target1 ;
+					for (var key in allCells) {
+						var cell_ = allCells[key];
+						if( cell_.getAttribute("title") == flow_title ){
+		
+							if(source.style != "microflow"){
+								
+								source1 = source ;
+								target1 = cell_;
+		
+							}else{
+								
+								source1 = cell_ ;
+								target1 = target;
+		
+							}
+						}
+					}
+
+					if(source1.getEdgeCount() !=0 ){
+						
+						for (var i = 0; i < source1.getEdgeCount(); i++) {
+							var source_ =  (source1.getEdgeAt(i)).source;
+							var target_ =  (source1.getEdgeAt(i)).target;
+
+							if (source_ == source1 || target_ == source1){
+								// Cells Already connected...........
+								console.log (true);
+							}
+							else{
+								window.graph.connectionHandler.connect( source1, target1 );
+							}
+						}
+					}else{
+
+						window.graph.connectionHandler.connect( source1, target1 );
+					}
+				}else{
+					//alert("F connected with Source")
+					let flows = JSON.parse(window.localStorage.flows);
+					let flow = flows[flow_title];
+					let micro_flows = flow.microflows;
+					for(var m=0; m<micro_flows.length; m++){
+						var cell = window.graph.model.getCell(micro_flows[m]);
+
+						if(cell.value.nodeName == "Information"){
+							if(cell.getEdgeCount() !=0 ){
+								
+								for (var i = 0; i < cell.getEdgeCount(); i++) {
+									var source_ =  (cell.getEdgeAt(i)).source;
+									var target_ =  (cell.getEdgeAt(i)).target;
+																		
+									if (source_ == cell || target_ == cell){
+										// Cells Already connected...........
+										console.log (true);
+										if(target_ == cell){
+											window.graph.connectionHandler.connect( cell, target );
+										}
+									}
+									else{
+										window.graph.connectionHandler.connect( target, cell );
+									}
+								}
+							}else{
+
+								window.graph.connectionHandler.connect( target, cell );
+							}
+						}
+					}
+				}
+			}
+			else if(source.style == "source"){
+				if(target.style == "microflow"){
+					//alert("Source connected with MF")
+					let allCells = window.graph.model.cells;
+					let source1, target1 ;
+					for (var key in allCells) {
+						var cell_ = allCells[key];
+						if( cell_.getAttribute("title") == flow_title ){
+		
+							if(source.style != "microflow"){
+								
+								source1 = source ;
+								target1 = cell_;
+		
+							}else{
+								
+								source1 = cell_ ;
+								target1 = target;
+		
+							}
+						}
+					}
+
+					if(target1.getEdgeCount() !=0 ){
+						
+						for (var i = 0; i < target1.getEdgeCount(); i++) {
+							var source_ =  (target1.getEdgeAt(i)).source;
+							var target_ =  (target1.getEdgeAt(i)).target;
+			
+							if (source_ == target1 || target_ == target1){
+								// Cells Already connected...........
+								console.log (true);
+							}
+							else{
+								window.graph.connectionHandler.connect( source1, target1 );
+							}
+						}
+					}else{
+
+						window.graph.connectionHandler.connect( source1, target1 );
+					}
+				}else{
+					//alert("Source connected with Flow")
+					let flows = JSON.parse(window.localStorage.flows);
+					let flow = flows[flow_title];
+					let micro_flows = flow.microflows;
+					for(var m=0; m<micro_flows.length; m++){
+						var cell = window.graph.model.getCell(micro_flows[m]);
+
+						if(cell.value.nodeName == "Information"){
+
+							if(cell.getEdgeCount() !=0 ){
+								
+								for (var i = 0; i < cell.getEdgeCount(); i++) {
+									var source_ =  (cell.getEdgeAt(i)).source;
+									var target_ =  (cell.getEdgeAt(i)).target;
+
+									//console.log(cell)
+									//console.log(source_)
+									//console.log(target_)
+									//console.log(source_.style)
+
+									if ((source_ == cell || target_ == cell) ){
+										// Cells Already connected...........
+										console.log (true);
+										/*if(source_.style != "microflow"){
+											window.graph.connectionHandler.connect( cell, source );
+											return
+										}*/
+									}
+									else{
+										window.graph.connectionHandler.connect( target, cell );
+										
+									}
+								}
+							}else{
+
+								window.graph.connectionHandler.connect( target, cell );
+							}
+						}
+					}
+
+					
+				}
+			}
+
+			/*
+			*	Ends --------- 
+			*	
+			*/
+			
+		});
+
+
+		
+		// When we remove the Flow it will remove the entire flow summary
+		this.graph.addListener(mxEvent.CELLS_REMOVED, function(sender,evt) {
+
+			sourceFlag = 0;
+			targetFlag = 0;
+			
+			this_.refreshFlows();
+
+			//console.log(evt.properties.cells[0].id)
+
+			var cell = evt.properties.cells[0];
+
+			/*if(cell.getEdgeCount() !=0 ){
+				for (var i = 0; i < cell.getEdgeCount(); i++) {
+					var source_ =  (cell.getEdgeAt(i)).source;
+					var target_ =  (cell.getEdgeAt(i)).target;
+	
+					if (source_ == cell || target_ == cell){
+						// Cells Already connected...........
+						console.log (true);
+					}
+					else{
+						console.log(false)
+					}
+				}
+			}
+
+
+				
+				if(evt.properties.cells[0].value){
+					var flow_title = evt.properties.cells[0].value.getAttribute("title");
+					
+					let newFlows = JSON.parse(window.localStorage.flows);
+					delete newFlows[flow_title];
+		
+					this_.refreshFlows(newFlows);
+		
+					localStorage.setItem("flows", JSON.stringify(newFlows) );
+				}
+			*/
+		});
+
+		this.setupRightClickMenu('');
 		this.setupListener();
 		
 	}
@@ -113,6 +742,7 @@ export default class FlowGraph {
 		this.graph.multiplicities.push(new mxMultiplicity(true, "Experience", "nodeName", null, null, null, ["Target", "Process"], "", "Experience Must Connect to Target"));
 		this.graph.multiplicities.push(new mxMultiplicity(true, "Process", "nodeName", null, null, null, ["Experience", "Information"], "", "Experience Must Connect to Target"));
 		this.graph.multiplicities.push(new mxMultiplicity(true, "Source", "nodeName", null, null, null, ["Flow", "Information"], "", "Source Must Connect to Flow"));
+
 	}
 
 	/**
@@ -157,6 +787,12 @@ export default class FlowGraph {
 		 * Creates a flow from selected cells
 		 */
 		this.editor.addAction("groupFlow", () => {
+			let title;
+			if(this.currentvalue == 'Flow'){
+				title = this.currentvalue;
+			}else{
+				title = prompt("Enter flow name:");
+			}
 
 			let flows = {};
 
@@ -166,21 +802,28 @@ export default class FlowGraph {
 
 			const newFlow = {};
 
-
-			const title = prompt("Enter flow name:");
+			
 			if(!title) {
 				alert("Please provide a flowname!");
 				return;
 			}
 
 			if(flows[title]) {
-				alert("Title already in use");
-				return;
+				const flow_length = Object.keys(JSON.parse(window.localStorage.flows)).length ;
+				title = this.currentvalue + " " + flow_length;
+
+				var cell = graph.getSelectionCell();
+				const edit = new mxCellAttributeChange(cell, "title", title);
+				graph.getModel().execute(edit);
+
+				//alert("Title already in use");
+				//return;
 			}
 
 			newFlow.title = title;
 			newFlow.description = "Default description";
 			newFlow.nodeIDs = [];
+			newFlow.microflows = [];
 
 			if(!this.graph.flows) {
 				this.graph.flows = [];
@@ -197,12 +840,10 @@ export default class FlowGraph {
 
 			flows[title] = newFlow;
 
-
 			localStorage.setItem("flows", JSON.stringify(flows) );
 			
-
 			this.refreshFlows();
-
+			
 		});
 
 		/**
@@ -216,7 +857,8 @@ export default class FlowGraph {
 		 * Fits the entire graph in view
 		 */
 		this.editor.addAction("fit", function() {
-			const margin = 20;
+			boundFitFlag = true;
+			const margin = 10;
 			const max = 3;
 
 			const bounds = this.graph.getGraphBounds();
@@ -229,6 +871,8 @@ export default class FlowGraph {
 			this.graph.view.scaleAndTranslate(s,
 				(margin + cw - w * s) / (2 * s) - bounds.x / this.graph.view.scale,
 				(margin + ch - h * s) / (2 * s) - bounds.y / this.graph.view.scale);
+			/*this.graph.view.scaleAndTranslate(s, -100, 100);*/
+			
 		});	
 
 		/**
@@ -268,7 +912,23 @@ export default class FlowGraph {
 
 		this.editor.addAction("toggleFullScreen", () => {
 			this.toggleFullScreen();
-		});
+		}); 
+	}
+	/**
+	 * Sets up new connection with the flows, Automatically created flow summary
+	 */
+	setupCellConnect(source, title) {
+		let flows = JSON.parse(localStorage.flows);
+		//forEach(flows, function(value, key) {
+			const selectedCells = source;
+			let flow = flows[title];
+			let cellID = selectedCells.getId();
+			flow.nodeIDs.push(cellID);
+			flow.nodeIDs = uniq(flow.nodeIDs);
+			localStorage.setItem("flows", JSON.stringify(flows));
+			
+			this.refreshFlows();
+		//});
 	}
 
 	/**
@@ -277,7 +937,6 @@ export default class FlowGraph {
 	 * @param {DOM Element} toolbarContainer 
 	 */
 	setupUI(sidebarContainer, toolbarContainer) {
-
 		graphUtils.configureStylesheet(this.graph);
 
 		// Add drag buttons to the sidebar
@@ -296,10 +955,12 @@ export default class FlowGraph {
 		const spacer = document.createElement("div");
 		spacer.style.display = "inline";
 		spacer.style.padding = "8px";
-
-		graphUtils.addToolbarButton(this.editor, toolbarContainer, "toggleMicroFlow", "", "./assets/images/eye.svg", true);
-		graphUtils.addToolbarButton(this.editor, toolbarContainer, "toggleFullScreen", "", "./assets/images/zoom-to-fit.svg", true );
 		
+		graphUtils.addToolbarButton(this.editor, toolbarContainer, "toggleMicroFlow", "", "../../assets/images/eye.svg", true);
+		graphUtils.addToolbarButton(this.editor, toolbarContainer, "toggleFullScreen", "", "../../assets/images/zoom-to-fit.svg", true );
+		//graphUtils.addToolbarButton(this.editor, toolbarContainer, 'fit', '', './assets/images/zoom-to-fit.svg', true );
+		//graphUtils.addToolbarButton(this.editor, toolbarContainer, 'zoomOut', '', './assets/images/zoom-out.svg', true );
+		//graphUtils.addToolbarButton(this.editor, toolbarContainer, 'zoomIn', '', './assets/images/zoom-in.svg', true );
 	}
 
 	/**
@@ -307,6 +968,7 @@ export default class FlowGraph {
 	 * when inserting a new cell to the graph
 	 */
 	setupNodeTemplates() {
+
 		const xmlDocument = mxUtils.createXmlDocument();
 		this.targetNode = xmlDocument.createElement("Target");
 		this.flowNode = xmlDocument.createElement("Flow");
@@ -333,17 +995,74 @@ export default class FlowGraph {
 
 		this.infoMicroNode.setAttribute("nodeType", "MicroFlow");
 		this.infoMicroNode.setAttribute("title", "MicroFlow");
+
+		
+
+
+		/*this.targetNode.setAttribute("x", "218");
+		this.targetNode.setAttribute("y", "6");
+		this.targetNode.setAttribute("style", "target");
+		this.targetNode.setAttribute("id", "1");
+		this.targetNode.setAttribute("endPoints", [2,4]);
+
+		this.flowNode.setAttribute("x", "218");
+		this.flowNode.setAttribute("y", "306");
+		this.flowNode.setAttribute("style", "flow");
+		this.flowNode.setAttribute("id", "2");
+		this.flowNode.setAttribute("endPoints", [3]);
+		
+		this.sourceNode.setAttribute("x", "100");
+		this.sourceNode.setAttribute("y", "573");
+		this.sourceNode.setAttribute("style", "source");
+		this.sourceNode.setAttribute("id", "3");
+		this.sourceNode.setAttribute("endPoints", []);
+
+		// MicroFlows
+		this.expMicroNode.setAttribute("x", "218");
+		this.expMicroNode.setAttribute("y", "164");
+		this.expMicroNode.setAttribute("style", "microflow");
+		this.expMicroNode.setAttribute("id", "4");
+		this.expMicroNode.setAttribute("endPoints", [5]);
+		
+		this.procMicroNode.setAttribute("x", "218");
+		this.procMicroNode.setAttribute("y", "295");
+		this.procMicroNode.setAttribute("style", "microflow");
+		this.procMicroNode.setAttribute("id", "5");
+		this.procMicroNode.setAttribute("endPoints", [6]);
+		
+		this.infoMicroNode.setAttribute("x", "218");
+		this.infoMicroNode.setAttribute("y", "428");
+		this.infoMicroNode.setAttribute("style", "microflow");
+		this.infoMicroNode.setAttribute("id", "6");
+		this.infoMicroNode.setAttribute("endPoints", [3]);
+
+
+		********Extra styles for graph creation End********* */
+
+		//this.graphNodes.push(this.targetNode);
+		//this.graphNodes.push(this.flowNode);
+		//this.graphNodes.push(this.sourceNode);
+		//this.graphNodes.push(this.expMicroNode);
+		//this.graphNodes.push(this.procMicroNode);
+		//this.graphNodes.push(this.infoMicroNode);
 	}
+
 	
 	/**
 	 * Sets up the menu which displays on right click of a cell
 	 */
-	setupRightClickMenu() {
+	setupRightClickMenu(currentvalue) {
 		// setup right click menu
 		mxPopupMenu.prototype.autoExpand = true;
-		let that = this;
-		this.graph.popupMenuHandler.factoryMethod = (menu, cell, evt) => {
-			
+		//let that = this;
+		if(currentvalue == 'Flow'){
+			setTimeout(()=>{
+				this.currentvalue = currentvalue;
+				this.editor.execute("groupFlow");
+			}, 100);	
+		}
+		
+		/*this.graph.popupMenuHandler.factoryMethod = (menu, cell, evt) => {
 			if (cell !== null && localStorage.flows) {
 				let flows = JSON.parse(localStorage.flows);
 				
@@ -353,14 +1072,15 @@ export default class FlowGraph {
 				
 
 				if( !isEmpty(flows) ) {
+					
 					menu.addSeparator();
 
 					const submenu1 = menu.addItem("Add to flow", null, null);
-					forEach(flows, function(value, key) {	
+					forEach(flows, function(value, key) {
+						
 						menu.addItem(value.title, null, function() {
 							const selectedCells = graph.getSelectionCells();
 							let flow = flows[value.title];
-							
 							for(let i = 0; i < selectedCells.length; i++ ) {
 								let cellID = selectedCells[i].getId();
 								flow.nodeIDs.push(cellID);
@@ -375,7 +1095,7 @@ export default class FlowGraph {
 					});
 				}
 			}
-		};
+		};*/
 	}
 
 	/**
@@ -406,6 +1126,10 @@ export default class FlowGraph {
 						value.nodeIDs = remove(value.nodeIDs, function(id) {
 							return that.graph.model.getCell(id);
 						});
+						value.microflows = remove(value.microflows, function(id) {
+							return that.graph.model.getCell(id);
+						});
+						
 					}
 				});
 
@@ -427,17 +1151,139 @@ export default class FlowGraph {
 	 * Reads the data and renders it to the screen.
 	 * Also initializes view mode.
 	 */
-	start() {
+	start(id) {
+		if(!id)
+		{
+			localStorage.clear();
+		}
 		this.graph.getModel().beginUpdate();
 		try {
-			if (localStorage.graphData) {
+
+			this.graphData = {};
+			let that = this;
+			
+			/*
+			*	API Call for getting Integration Flow in the selected Project
+			*/
+			axios.get('/api/get/project/'+id).then(function(response){
+				
+				
+
+				const xmlDocument = mxUtils.createXmlDocument();
+
+				var parent_ = response.data.flow;
+				for( var s=0; s<parent_.length; s++ ){
+					var cell_type = parent_[s].type;
+					if(cell_type == "flow"){
+						
+						that.flowNode = xmlDocument.createElement("Flow");
+						that.flowNode.setAttribute("nodeType", "Information");
+						that.flowNode.setAttribute("title", parent_[s].int_name);
+						that.flowNode.setAttribute("x", parent_[s].int_posX);
+						that.flowNode.setAttribute("y", parent_[s].int_posY);
+						that.flowNode.setAttribute("style", parent_[s].int_style);
+						that.flowNode.setAttribute("id", parent_[s].int_cell_id);
+						that.flowNode.setAttribute("endPoints", parent_[s].int_endpoints);
+
+					}
+
+					
+					that.graphNodes.push(that.flowNode);
+				}
+				
+				var child = response.data.childCells;
+
+				for( var f=0; f<child.length; f++ ){
+					var cell_type = child[f].mf_style;
+					if(child[f].mf_style == "target"){
+						
+						that.targetNode = xmlDocument.createElement("Target");
+						that.targetNode.setAttribute("nodeType", "App");
+						that.targetNode.setAttribute("title", child[f].mf_name);
+						that.targetNode.setAttribute("x", child[f].mf_posX);
+						that.targetNode.setAttribute("y", child[f].mf_posY);
+						that.targetNode.setAttribute("style", child[f].mf_style);
+						that.targetNode.setAttribute("id", child[f].mf_cell_id);
+						that.targetNode.setAttribute("endPoints", child[f].mf_endpoints);
+
+						that.graphNodes.push(that.targetNode);
+												
+					}
+					else if(child[f].mf_style == "source"){
+
+						that.sourceNode = xmlDocument.createElement("Source");
+						that.sourceNode.setAttribute("nodeType", "App");
+						that.sourceNode.setAttribute("title", child[f].mf_name);
+						that.sourceNode.setAttribute("x", child[f].mf_posX);
+						that.sourceNode.setAttribute("y", child[f].mf_posY);
+						that.sourceNode.setAttribute("style", child[f].mf_style);
+						that.sourceNode.setAttribute("id", child[f].mf_cell_id);
+						that.sourceNode.setAttribute("endPoints", child[f].mf_endpoints);
+
+						that.graphNodes.push(that.sourceNode);
+												
+					}
+					else if(child[f].mf_style == "microflow"){
+						if(child[f].mf_type == "Experience"){
+							
+							that.expMicroNode = xmlDocument.createElement("Experience");
+							that.expMicroNode.setAttribute("nodeType", "MicroFlow");
+							that.expMicroNode.setAttribute("title", "MicroFlow");
+							that.expMicroNode.setAttribute("x", child[f].mf_posX);
+							that.expMicroNode.setAttribute("y", child[f].mf_posY);
+							that.expMicroNode.setAttribute("style", child[f].mf_style);
+							that.expMicroNode.setAttribute("id", child[f].mf_cell_id);
+							that.expMicroNode.setAttribute("endPoints", child[f].mf_endpoints);
+
+							that.graphNodes.push(that.expMicroNode);
+						
+						}else if(child[f].mf_type == "Process"){
+
+							that.procMicroNode = xmlDocument.createElement("Process");
+							that.procMicroNode.setAttribute("nodeType", "MicroFlow");
+							that.procMicroNode.setAttribute("title", child[f].mf_name);
+							that.procMicroNode.setAttribute("x", child[f].mf_posX);
+							that.procMicroNode.setAttribute("y", child[f].mf_posY);
+							that.procMicroNode.setAttribute("style", child[f].mf_style);
+							that.procMicroNode.setAttribute("id", child[f].mf_cell_id);
+							that.procMicroNode.setAttribute("endPoints", child[f].mf_endpoints);
+
+							that.graphNodes.push(that.procMicroNode);
+							
+						}else{
+							
+							that.infoMicroNode = xmlDocument.createElement("Information");
+							that.infoMicroNode.setAttribute("nodeType", "MicroFlow");
+							that.infoMicroNode.setAttribute("title", child[f].mf_name);
+							that.infoMicroNode.setAttribute("x", child[f].mf_posX);
+							that.infoMicroNode.setAttribute("y", child[f].mf_posY);
+							that.infoMicroNode.setAttribute("style", child[f].mf_style);
+							that.infoMicroNode.setAttribute("id", child[f].mf_cell_id);
+							that.infoMicroNode.setAttribute("endPoints", child[f].mf_endpoints);
+
+							that.graphNodes.push(that.infoMicroNode);
+							
+						}
+					}				
+				}
+				
+				graphUtils.buildFlowGraph(that.graph,that.graphNodes);
+
+			}).catch(function(error){
+				//Some error occurred
+			});
+
+
+
+			//graphUtils.buildFlowGraph(this.graph,this.graphNodes);
+
+			/*if (localStorage.graphData) {
 				graphUtils.readFromLocalstorage(this.graph);
 			} else {
 				// If no saved graph in localStorage, initialize the default graph
 				graphUtils.read(this.graph, "./assets/xml/defaultGraph.xml");
-			}
+			}*/
 		} finally {
-
 
 			// Updates the display
 			this.graph.getModel().endUpdate();
@@ -454,14 +1300,57 @@ export default class FlowGraph {
 			} else {
 				graphUtils.toggleFlowMicroLayers(this.graph, false);	
 			}
-
 			
 		}
+
+	/**** Key handler Delete & Backspace key handling*/
+		var keyHandler = new mxKeyHandler(this.graph);
+		keyHandler.bindKey(46, function(evt)
+		{
+			var selectedCells = window.graph.getSelectionCells();
+			for(var s=0; s<selectedCells.length; s++){
+				if( selectedCells[s].style == "flow" && window.summaryClass ){
+					var flow_title = selectedCells[s].value.getAttribute("title");
+					FlowPopup(flow_title, window.summaryClass);
+				}else if(selectedCells[s].style == "microflow" || selectedCells[s].style == "target" || selectedCells[s].style == "source" || selectedCells[s].value == "" ){
+					if (window.graph.isEnabled())
+					{
+						 window.graph.removeCells([selectedCells[s]]);
+					}
+				}else{
+					window.graph.removeCells([selectedCells[s]]);
+				}
+			}
+		});
+
+		keyHandler.bindKey(8, function(evt)
+		{
+			var selectedCells = window.graph.getSelectionCells();
+			for(var s=0; s<selectedCells.length; s++){
+				if( selectedCells[s].style == "flow" && window.summaryClass ){
+					var flow_title = selectedCells[s].value.getAttribute("title");
+					FlowPopup(flow_title, window.summaryClass);
+				}else if(selectedCells[s].style == "microflow" || selectedCells[s].style == "target" || selectedCells[s].style == "source" || selectedCells[s].value == ""){
+					if (window.graph.isEnabled())
+					{
+					  window.graph.removeCells([selectedCells[s]]);
+					}
+				}else{
+					window.graph.removeCells([selectedCells[s]]);
+				}
+			}
+		});
+	/***** END */
 
 		this.toggleFullScreen(false);
 		
 	}
 }
+
+FlowGraph.propTypes = {
+	dispatch: PropTypes.func,
+};
+
 
 /**
 	@OVERRIDES
@@ -481,8 +1370,9 @@ mxGraph.prototype.isCellFoldable.isCellResizable = function() {
 mxGraph.prototype.dblClick = function(evt, cell) {
 	// Do not fire a DOUBLE_CLICK event here as mxEditor will
 	// consume the event and start the in-place editor.
-    
+/*    
 	if (this.isEnabled() && !mxEvent.isConsumed(evt) && cell && this.isCellEditable(cell)) {
+
 		if ( !this.model.isEdge(cell) ) {
 			graph.getModel().beginUpdate();
 
@@ -497,11 +1387,10 @@ mxGraph.prototype.dblClick = function(evt, cell) {
 			}
 		}
 	}
-
+*/
 	// Disables any default behaviour for the double click
 	mxEvent.consume(evt);
 };
-
 
 // Sets the label to the title attribute provided by the node
 mxGraph.prototype.convertValueToString = function(cell) {
@@ -531,6 +1420,10 @@ mxGraph.prototype.convertValueToString = function(cell) {
 
 	return "UNDEFINED";
 };
+mxGraph.prototype.retunLabel = function(cell) {
+	const label = (this.labelsVisible) ? this.convertValueToString(cell) : "";
+	return label;
+}
 
 // Shortens the printed label by appending "..." if the name is to long
 mxGraph.prototype.getLabel = function(cell) {
@@ -538,26 +1431,23 @@ mxGraph.prototype.getLabel = function(cell) {
 	const label = (this.labelsVisible) ? this.convertValueToString(cell) : "";
 	const geometry = this.model.getGeometry(cell);
 
-
 	// Label as in the name of the node, the the actual label object
 	const isLabel = typeof(cell.getValue()) === "string";
-
 	if (isLabel) {
-		max = 8;
+		max = 10;
 
 		if (max < label.length) {
 			return label.substring(0, max) + "...";
 		}
 	}
-
-
+	
 	if (!this.model.isCollapsed(cell) && geometry !== null && (geometry.offset === null ||
-																																																								(geometry.offset.x === 0 && geometry.offset.y === 0)) && this.model.isVertex(cell) &&
-																																																								geometry.width >= 2) {
+																																																								
+		(geometry.offset.x === 0 && geometry.offset.y === 0)) && this.model.isVertex(cell) &&
+		geometry.width >= 2) {
 		const style = this.getCellStyle(cell);
 		const fontSize = style[mxConstants.STYLE_FONTSIZE] || mxConstants.DEFAULT_FONTSIZE;
 		max = geometry.width / (fontSize * 0.625);
-
 		if (max < label.length) {
 			return label.substring(0, max) + "...";
 		}
@@ -581,6 +1471,7 @@ mxConnectionHandler.prototype.connectImage = new mxImage("./assets/images/connec
 mxGraph.prototype.setGridEnabled(false);
 
 mxGraph.prototype.selectAll = function(parent, descendants) {
+
 	const newParent = parent || this.getDefaultParent();
 	
 	let sLayer = null; // graph layer containing microService nodes
@@ -659,10 +1550,126 @@ mxPanningHandler.prototype.mouseMove = function(sender, me) {
 	}
 };
 
+
+function cellMoved(node_type){
+		
+	if( node_type == "ExperienceMicroFlow" || node_type == "ProcessMicroFlow" || node_type == "InformationMicroFlow" ||  node_type == "InformationFlow"){
+		
+		var cells = graph.getModel().getCell("flowLayer").children;
+
+
+		if(cells){
+			for (var i=0; i<cells.length; i++){
+				
+				var largest;
+				var countArray = [];
+				var expCount = 0, proCount = 0, infoCount = 0;
+
+				var cell_title = cells[i].getAttribute("title");
+				let flows = JSON.parse(window.localStorage.flows);
+				
+				let thisFlow = flows[cell_title];
+
+				if( cells[i].value ){
+
+					for(var n=0; n<thisFlow.nodeIDs.length; n++){
+						var node_id = thisFlow.nodeIDs[n];
+
+						if( "ExperienceMicroFlow" == graph.getModel().getCell(node_id).value.nodeName+"MicroFlow" ){
+							expCount++;
+						}else if( "ProcessMicroFlow" == graph.getModel().getCell(node_id).value.nodeName+"MicroFlow" ){
+							proCount++;
+						}else if("InformationMicroFlow" == graph.getModel().getCell(node_id).value.nodeName+"MicroFlow"){
+							infoCount++;
+						}
+						
+						countArray.push(expCount, proCount, infoCount);
+						
+						largest = Math.max.apply(0, countArray);
+					}
+					var cell_width, cell_left,left_box_count=0,right_box_count=0;
+					
+					//var cell_width = (cells[i].geometry.width)*(largest+1)+(largest*100);
+
+					if(largest == 0){
+
+						cell_width = (cells[i].geometry.width);
+						cell_left = (cells[i].geometry.x*0.86);
+
+					}
+					else if(largest == 1){
+
+						cell_width = (cells[i].geometry.width)*(largest+2);
+						cell_left = (cells[i].geometry.x*0.86)-(100);
+
+					}
+					else{
+
+						cell_width = (cells[i].geometry.width)*(largest+2);
+
+						var microflows = thisFlow.microflows;
+						for( var m=0; m<microflows.length; m++){
+							var microCell = window.graph.model.getCell(microflows[m]);
+							if( (microCell.geometry.x+50) < cells[i].geometry.x ){
+								left_box_count++;
+							}else{
+								right_box_count++
+							}
+						}
+
+						if(left_box_count){
+							cell_left = (cells[i].geometry.x*0.86)-((left_box_count+1)*100);
+						}else if(right_box_count){
+							cell_left = (cells[i].geometry.x*0.86)-(100);
+						}
+					}
+
+
+					//var cell_width = cells[i].geometry.width*2;
+					var div = document.createElement("div");
+					var span = document.createElement("span");
+					span.innerHTML = cells[i].getValue().getAttribute("title");
+					div.setAttribute("class", "background_div");
+					div.setAttribute("id", cells[i].getValue().getAttribute("title"));
+					div.style.background = "rgba(158, 158, 158, 0.16)";
+					div.style.width = cell_width+"px";
+					div.style.height = "386px";
+					div.style.position = "absolute";
+					//div.style.left = (cells[i].geometry.x*0.86+10)-(cells[i].geometry.width);
+					//div.style.left = (cells[i].geometry.x*0.86-5)-(largest*100);
+					div.appendChild(span);
+					div.style.top = "150px";
+
+					if( node_type == "InformationFlow"){
+						//div.style.top = "0px";
+						div.style.left = cell_left-5;
+						//document.getElementById("swimlane-5").appendChild(div);
+					}else{
+						//div.style.top = "152px";
+						div.style.left = cell_left-5;
+						//document.getElementById("graph_Container").appendChild(div);
+					}
+
+					document.getElementById("graph_Container").appendChild(div);
+
+					if( $("#graph_Container")[0].offsetWidth < $("#graph_Container")[0].scrollWidth ){
+						$("#graph_Container").animate({scrollLeft: 200}, 800);
+					}
+				}
+
+			}
+		}
+	}
+}
+
 // Highlight drop targets when dragging a new node into view
 mxDragSource.prototype.startDrag = function(evt) {
-	evt.preventDefault();
 
+	var node_type = this.element.getAttribute("nodeType");
+
+	cellMoved(node_type)
+
+	evt.preventDefault();
 
 	let divTarget;
 
@@ -684,13 +1691,12 @@ mxDragSource.prototype.startDrag = function(evt) {
 		break;	
 	case "InformationMicroFlow":
 		divTarget = document.getElementById("swimlane-4").getElementsByTagName("div")[0];
-		break;	
+		break;
 	default:
 		divTarget = container;
 	}
 
 	divTarget.classList.add("highlighted");
-
 	this.dragElement = this.createDragElement(evt);
 	this.dragElement.style.position = "absolute";
 	this.dragElement.style.zIndex = this.dragElementZIndex;
@@ -703,7 +1709,17 @@ mxDragSource.prototype.startDrag = function(evt) {
  * Invokes <removeDragElement>.
  */
 mxDragSource.prototype.stopDrag = function() {
-	
+
+	/** Removed Flow Background */
+	const flow_background = document.getElementsByClassName("background_div");
+
+	for(let j = flow_background.length; j >= 0; j--) {
+		if(flow_background[j]){
+			flow_background[j].remove();
+		}
+	}
+
+
 	const highlighted = document.getElementsByClassName("highlighted");
 
 	for(let i = 0; i < highlighted.length; i++) {
@@ -715,4 +1731,3 @@ mxDragSource.prototype.stopDrag = function() {
 	// is not associated with a mouse event and which currently calles this method.
 	this.removeDragElement();
 };
-

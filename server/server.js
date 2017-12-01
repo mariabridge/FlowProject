@@ -30,8 +30,12 @@ if ( app.get("env") !== "production" ) {
 require("./config/passport.js")(passport);
 
 // ROUTING //
-const distPath = path.join(__dirname, "../dist");
-const indexFileName = "index.html";
+//const distPath = path.join(__dirname, "../dist");
+//const indexFileName = "index.html";
+
+const distPath = path.join(__dirname, "../src");
+const indexFileName = "index-template.html";
+
 
 app.use(helmet());
 app.use(cookieParser());

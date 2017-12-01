@@ -20,3 +20,127 @@
 		color: rgba(255,255,255,1.0);
 	}
 }
+
+/** Save Project page styles**/
+
+.project_title{
+	padding: 1em;
+    background: no-repeat;
+    border: none;
+    font-size: 20px;
+}
+.project_title::-webkit-input-placeholder { /* Chrome */
+	color: rgba(255,255,255,0.2);
+}
+
+/*** END **/
+
+#login-form input{
+    background: rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, .5);
+    border: 0;
+    -moz-box-sizing: unset;
+    font-weight: 600;
+	font-size: 14px;
+	padding: 1.7em;
+	border-radius: 0;
+   
+    &::-webkit-input-placeholder {
+        /* Chrome/Opera/Safari */
+        color: rgba(255, 255, 255, .5);
+         font-size: 14px;
+    }
+    &::-moz-placeholder {
+        /* Firefox 19+ */
+        color: rgba(255, 255, 255, .5);
+         font-size: 14px;
+    }
+    &:-ms-input-placeholder {
+        /* IE 10+ */
+        color: rgba(255, 255, 255, .5);
+         font-size: 14px;
+    }
+    &:-moz-placeholder {
+        /* Firefox 18- */
+        color: rgba(255, 255, 255, .5);
+         font-size: 14px;
+    }
+    &:focus {
+        background: rgba(255, 255, 255, .5);
+        color: rgba(255, 255, 255, 1);
+        box-shadow: unset;
+        &::-webkit-input-placeholder {
+            color: rgba(255, 255, 255, 1);
+        }
+        &::-webkit-input-placeholder {
+            color: rgba(255, 255, 255, 1);
+        }
+        /* Firefox < 19 */
+        &:-moz-placeholder {
+            color: rgba(255, 255, 255, 1);
+        }
+        &:-moz-placeholder {
+            color: rgba(255, 255, 255, 1);
+        }
+        /* Firefox > 19 */
+        &::-moz-placeholder {
+            color: rgba(255, 255, 255, 1);
+        }
+        &::-moz-placeholder {
+            color: rgba(255, 255, 255, 1);
+        }
+        /* Internet Explorer 10 */
+        &:-ms-input-placeholder {
+            color: rgba(255, 255, 255, 1);
+        }
+        &:-ms-input-placeholder {
+            color: rgba(255, 255, 255, 1);
+        }
+    }
+}
+.login_box, #save-project {
+    margin: 0 !important;
+    width: 300px !important;
+    display: block;
+    margin-left: auto !important;
+    margin-right: auto !important;
+}
+.login_box .btn-login-btn, #save-project .btn-login-btn{
+    border-radius: 3px !important;
+	color: #2d72ad !important;
+	padding: 1em;
+    width: 100%;
+    background: white;
+    color: black;
+    span {
+        font-size: 22px;
+        margin-left: 10px;
+        color: #2d72ae;
+    }
+}
+.errorClass{
+    color: red;
+}
+.login_box .btn-register-in {
+    margin: 0px !important;
+    margin-right: 20px !important;
+}
+.login_box  .last-btn-register {
+    margin: 0px !important;
+    margin-right: 0px !important;
+}
+.login_box .link-header span {
+    font-size: 11px;
+    font-weight: 600;
+}
+#save-project input{
+    width: 100%;
+}
+.login_box  .btn-sign-in {
+    width: 100%;
+    border-radius: 0 !important;
+    text-align: left;
+}
+.facebook-radius svg {
+    border-radius: 10px;
+}
