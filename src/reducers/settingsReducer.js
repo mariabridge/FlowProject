@@ -1,5 +1,5 @@
 export default function reducer(state = {
-	bgColor: "rgb(60, 60, 60)",
+	bgColor: (window.localStorage.bgColor?window.localStorage.bgColor:"rgb(60, 60, 60)"),
 	highlighted: null,
 	expanded: null,
 }, action) {

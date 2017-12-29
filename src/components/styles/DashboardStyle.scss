@@ -2,38 +2,52 @@
 
 @import './commons';
 
-.dashboard{
-    li{
+.dashboard {
+    li {
         list-style-type: none;
     }
-    .project_box{
+    .project_box {
         list-style-type: none;
         padding: 1em;
         text-align: left;
     }
-    .project_list{
+    .project_list {
         background: #afafaf69;
-        padding: 1em;
-        height: 150px;
+        padding: 23px 30px;
+        min-height: 180px;
         cursor: pointer;
+
     }
-    h5{
+    .flow-title {
+        font-size: 26px;
+        font-weight: normal;
+        font-family: Montserrat;
+        margin-top: 0;
+        line-height: 35px;
+    }
+    h4 {
         font-size: 20px;
-        font-weight: bolder;
-        font-family: sans-serif;
-    }
-    h6{
-        font-size: 14px;
         opacity: 0.58;
     }
-    h4{
-        font-size: 20px;
-        opacity: 0.58;
-    }
-    img{
+    img {
         width: 30px;
         float: right;
         opacity: 0.8;
     }
-    
+    .dashboard-title {
+        font-size: 50px;
+        font-family: Montserrat;
+        padding-left: 15px;
+        margin-bottom: 60px;
+    }
+    .dashbox {
+        padding: 0;
+    }
+    .flow-count{
+        font-size: 16px;
+        font-family: Montserrat;
+        opacity: 0.60;
+        line-height: 30px;
+
+    }
 }

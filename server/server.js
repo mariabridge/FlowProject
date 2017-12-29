@@ -30,8 +30,12 @@ if ( app.get("env") !== "production" ) {
 require("./config/passport.js")(passport);
 
 // ROUTING //
-const distPath = path.join(__dirname, "../dist");
-const indexFileName = "index.html";
+//const distPath = path.join(__dirname, "../dist");
+//const indexFileName = "index.html";
+
+const distPath = path.join(__dirname, "../src");
+const indexFileName = "index-template.html";
+
 
 app.use(helmet());
 app.use(cookieParser());
@@ -52,6 +56,6 @@ require("./routes")(app, passport);
 
 
 // START SERVER //
-app.listen(process.env.PORT || 3000, function() {
-	console.log( colors.green("Listening on port 3000") );
+app.listen(process.env.PORT || 4000, function() {
+	console.log( colors.green("Listening on port 4000") );
 });

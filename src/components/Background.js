@@ -8,7 +8,10 @@ require("./styles/BackgroundStyle.scss");
 	return store.settings;
 })
 
+
 export default class Background extends Component {
+
+
 	render() {
 		return (
 			<div className="background" style={{backgroundColor: this.props.bgColor}} />

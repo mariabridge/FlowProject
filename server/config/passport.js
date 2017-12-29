@@ -4,6 +4,7 @@
 let FacebookStrategy = require("passport-facebook").Strategy;
 let GoogleStrategy = require("passport-google-oauth20").Strategy;
 let LinkedInStrategy = require("passport-linkedin-oauth2").Strategy;
+let LocalStrategy   = require('passport-local').Strategy;
 
 // load the auth variables
 let configAuth = require("./auth");
@@ -21,9 +22,38 @@ module.exports = function(passport) {
 	});
 
 
+
+	// =========================================================================
+    // LOCAL SIGNUP ============================================================
+    // =========================================================================
+
+	passport.use('local-signup', new LocalStrategy({
+        usernameField : 'email',
+        passwordField : 'password',
+        passReqToCallback : true // allows us to pass back the entire request to the callback
+	},
+	
+    function(req, email, password, done) {
+		process.nextTick(function() {
+			let newUser = {};
+			newUser.id    = req.result.id; // set the users  id                   
+			newUser.token = "";                
+			newUser.first_name = req.result.u_firstname;
+			newUser.last_name = req.result.u_surname;
+			newUser.pic_url = "";
+
+			return done(null, newUser);
+        });
+
+    }));
+
+
+
+
 	// =========================================================================
 	// FACEBOOK ================================================================
 	// =========================================================================
+	
 	passport.use(new FacebookStrategy({
 
 		// pull in our app id and secret from our auth.js file

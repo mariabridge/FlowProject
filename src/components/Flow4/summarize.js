@@ -92,11 +92,11 @@ export function summarize(data) {
 			title: flow._attributes.title,
 			description: "Default description",
 			nodeIDs: [],
+			microflows:[],
 		};
 
 		// Add all nodes directly connected to the root node
 		let oneNeighborhood = findNeighbours(flowID);
-		console.log(oneNeighborhood);
 		let twoNeighborhood = [];
 
 		for(let j = 0; j < oneNeighborhood.length; j++) {

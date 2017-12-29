@@ -2819,6 +2819,10 @@ var mxUtils =
 		{
 			tab = tab || '  ';
 			indent = indent || '';
+			console.log("prettyxml");
+			console.log(node.nodeType);
+			console.log(mxConstants.NODETYPE_TEXT);
+			console.log("******");
 			
 			if (node.nodeType == mxConstants.NODETYPE_TEXT)
 			{
