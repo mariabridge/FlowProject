@@ -7,7 +7,7 @@ var sequelize = new Sequelize('flowproj', 'flowproj', 'bridgeglobal', {
 	//host:'e000-uat-web.cxyt74qbttnp.eu-west-1.rds.amazonaws.com',
 	host:"bridge-db.cq5zewafrej6.us-west-2.rds.amazonaws.com",
     port:'3306',
-	dialect: 'mysql2'
+	dialect: 'mysql'
 	
 });
 
