@@ -104,11 +104,11 @@ const con = mysql.createConnection({
 	host: "bridge-db.cq5zewafrej6.us-west-2.rds.amazonaws.com",
 	user: "flowproj",
 	password: "bridgeglobal",
-	database: "flowproj"
+	database: "flowproj",
+	connectTimeout: 30000
 });
 
 con.connect(function(err) {
-	console.log(err);
 	if (err) throw err;
 	console.log("Connected!");
 });
