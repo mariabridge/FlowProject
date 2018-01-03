@@ -4,7 +4,7 @@ var Sequelize = require('sequelize');
 
 var sequelize = new Sequelize('flowproj', 'flowproj', 'Y7zS6ELp8rvGttdbfTK0dGEa8VmEub', {
 
-	host:'e000-uat-web.cxyt74qbttnp.eu-west-1.rds.amazonaws.com',
+	host:'http://e000-uat-web.cxyt74qbttnp.eu-west-1.rds.amazonaws.com',
     port:'3306',
 	dialect: 'mysql'
 	
