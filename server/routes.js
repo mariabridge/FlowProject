@@ -1,5 +1,5 @@
 const path = require("path");
-const mysql = require('mysql');
+const mysql = require('mysql2');
 var Sequelize = require('sequelize');
 
 var sequelize = new Sequelize('flowproj', 'flowproj', 'bridgeglobal', {
