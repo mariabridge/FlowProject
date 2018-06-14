@@ -37,7 +37,7 @@ const distPath = path.join(__dirname, "../src");
 const indexFileName = "index-template.html";
 
 
-app.use(helmet());
+/*app.use(helmet());
 app.use(cookieParser());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
@@ -52,10 +52,10 @@ app.use(passport.session());
 
 
 app.use(express.static(distPath));
-require("./routes")(app, passport);
+require("./routes")(app, passport);*/
 
 
 // START SERVER //
 app.listen(process.env.PORT || 4001, function() {
-	console.log( colors.green("Listening on port 4000") );
+	console.log( colors.green("Listening on port 4001") );
 });
