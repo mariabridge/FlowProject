@@ -52,7 +52,7 @@ app.use(passport.session());
 
 
 app.use(express.static(distPath));
-/*require("./routes")(app, passport);*/
+require("./routes")(app, passport);
 
 
 // START SERVER //
