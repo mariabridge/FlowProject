@@ -37,7 +37,7 @@ const distPath = path.join(__dirname, "../src");
 const indexFileName = "index-template.html";
 
 
-/*app.use(helmet());
+app.use(helmet());
 app.use(cookieParser());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
@@ -47,7 +47,7 @@ app.use(require("cookie-session")({
 	// Cookie Options
 	maxAge: 7 * 24 * 60 * 60 * 1000, //1 week
 }));
-app.use(passport.initialize());
+/*app.use(passport.initialize());
 app.use(passport.session());
 
 
