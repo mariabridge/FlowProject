@@ -47,12 +47,12 @@ app.use(require("cookie-session")({
 	// Cookie Options
 	maxAge: 7 * 24 * 60 * 60 * 1000, //1 week
 }));
-/*app.use(passport.initialize());
+app.use(passport.initialize());
 app.use(passport.session());
 
 
 app.use(express.static(distPath));
-require("./routes")(app, passport);*/
+require("./routes")(app, passport);
 
 
 // START SERVER //
