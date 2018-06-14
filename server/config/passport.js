@@ -36,10 +36,10 @@ module.exports = function(passport) {
     function(req, email, password, done) {
 		process.nextTick(function() {
 			let newUser = {};
-			newUser.id    = req.result.id; // set the users  id                   
-			newUser.token = "";                
-			newUser.first_name = req.result.u_firstname;
-			newUser.last_name = req.result.u_surname;
+			newUser.id    = req.result.uid; // set the users facebook id                   
+			newUser.token = ""; // we will save the token that facebook provides to the user                    
+			newUser.first_name = req.result.firstname;
+			newUser.last_name = req.result.surname;
 			newUser.pic_url = "";
 
 			return done(null, newUser);

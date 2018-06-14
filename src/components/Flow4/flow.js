@@ -196,7 +196,31 @@ export function initGraph(container, sidebarContainer, toolbarContainer, sidebar
 
 		const toggleFullScreen = function(graph, isFullScreen) {
 
-		
+			if(isFullScreen !== undefined) {
+				graph.view.fullscreen = isFullScreen;				
+			} else {
+				graph.view.fullscreen = !graph.view.fullscreen || false;
+			}
+
+			// Zoomed in mode
+			if(!graph.view.fullscreen) {
+				let cssBorder = graph.getBorderSizes();
+				let s = graph.view.scale;
+
+				let h1 = graph.container.offsetHeight - cssBorder.y - cssBorder.height - 1;
+				const h2 = 8 * styleConstants.cell.height;
+
+				const s2 = h1 / h2;
+
+				graph.view.scaleAndTranslate(s2, 0, 0);
+
+				document.getElementById("swimlanes").style.display = null;
+
+			// Full screen mode
+			} else {
+				document.getElementById("swimlanes").style.display = "none";
+				editor.execute("fit");
+			}
 		};		
 
 
@@ -232,7 +256,7 @@ export function initGraph(container, sidebarContainer, toolbarContainer, sidebar
 			const cell = evt.getProperty("cell");
 
 			if (cell) {
-				console.log(cell);
+				//console.log(cell);
 			}
 		});
 
@@ -302,7 +326,7 @@ export function initGraph(container, sidebarContainer, toolbarContainer, sidebar
 			const isLabel = typeof(cell.getValue()) === "string";
 
 			if (isLabel) {
-				max = 15;
+				max = 8;
 
 				if (max < label.length) {
 					return label.substring(0, max) + "...";
@@ -311,8 +335,8 @@ export function initGraph(container, sidebarContainer, toolbarContainer, sidebar
 
 
 			if (!this.model.isCollapsed(cell) && geometry !== null && (geometry.offset === null ||
-				(geometry.offset.x === 0 && geometry.offset.y === 0)) && this.model.isVertex(cell) &&
-				geometry.width >= 2) {
+																(geometry.offset.x === 0 && geometry.offset.y === 0)) && this.model.isVertex(cell) &&
+																geometry.width >= 2) {
 				const style = this.getCellStyle(cell);
 				const fontSize = style[mxConstants.STYLE_FONTSIZE] || mxConstants.DEFAULT_FONTSIZE;
 				max = geometry.width / (fontSize * 0.625);

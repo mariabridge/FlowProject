@@ -86,7 +86,11 @@ export default class Login extends React.Component {
 					message: 'You have logged in successfully'
 				});
 				
-				browserHistory.push('/dashboard'); // In react-router v3 only
+				//localStorage.setItem('user', JSON.stringify(response.data[0]));
+				//var userdetails = localStorage.getItem('user');
+				   
+				//browserHistory.push('/flowhow4'); // In react-router v3 only
+				window.location.href = "/"  
 			}else{
 
 				console.log("failure");

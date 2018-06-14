@@ -2,6 +2,7 @@ import React, { Component } from "react";
 import PropTypes from "prop-types";
 import { connect } from "react-redux";
 import { Link } from "react-router";
+import axios from "axios";
 
 // STYLES //
 require("./styles/HeaderStyle.scss");
@@ -55,37 +56,27 @@ export default class Header extends Component {
 							<img src="http://www.entiros.se/sites/all/themes/bootstrap_subtheme/logoText.png" class="logo"/>
 						</Link>
 					</div>
-					
-				    <div className="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
-					
-				
 
+				    <div className="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
 						{/* <ul class="nav navbar-nav">
 							<li><a href="#">About</a></li>
 							<li><a href="#">Link</a></li>
 						</ul>*/}
 						{!loggedIn && !fetching && 
-							<ul className="nav navbar-nav navbar-right">								
+							<ul className="nav navbar-nav navbar-right">
 								<li><Link to="/sign-in"  className="link link-header no-border"> <span>LOGGA IN</span> </Link></li>
 								<li><Link to="/register" className="link link-header"> <span>REGISTRERA</span> </Link></li>
 							</ul>
 						}
 						{loggedIn && !fetching &&
 							<ul className="nav navbar-nav navbar-right">
+								<li><a className="link link-header no-border logout" href="/auth/log-out">LOG OUT</a>  </li>
 								{pic_url &&
-									<a className="dropdown-toggle link link-header no-border logout" data-toggle="dropdown">{first_name}
-									<img className="profile-picture" src={pic_url} alt=""/>
-									<span class="caret"></span></a>
+									<li><img className="profile-picture" src={pic_url} alt=""/></li>
 								}
-								<div class="dropdown">
-									{!pic_url &&
-										<a className="dropdown-toggle link link-header no-border logout" data-toggle="dropdown">{first_name}
-										<span class="caret"></span></a>
-									}
-									<ul class="dropdown-menu">
-										<li><a className="link link-header no-border logout" href="/auth/log-out">LOG OUT</a></li>
-									</ul>
-								</div>
+								{!pic_url &&
+									<li><a className="link link-header no-border logout">{first_name}</a></li>
+								}
 							</ul>
 						}
 				    </div>

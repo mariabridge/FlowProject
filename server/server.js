@@ -45,7 +45,7 @@ app.use(require("cookie-session")({
 	name: "session",
 	keys: ["mysecretkeyboardcat"],
 	// Cookie Options
-	maxAge: 7 * 24 * 60 * 60 * 1000, //1 week
+	maxAge: 7 * 24 * 60 * 60 * 1000, // 1 week
 }));
 app.use(passport.initialize());
 app.use(passport.session());
@@ -56,6 +56,6 @@ require("./routes")(app, passport);
 
 
 // START SERVER //
-app.listen(process.env.PORT || 4001, function() {
-	console.log( colors.green("Listening on port 4000") );
+app.listen(process.env.PORT || 3000, function() {
+	console.log( colors.green("Listening on port 3000") );
 });

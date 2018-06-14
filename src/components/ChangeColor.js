@@ -52,7 +52,6 @@ export default class ChangeColor extends Component {
 		const c = e.target.style.backgroundColor;
 		
 		this.props.dispatch(changeBackground(c));
-		localStorage.setItem("bgColor", c );
 		
 		this.setState({
 			selected: c,

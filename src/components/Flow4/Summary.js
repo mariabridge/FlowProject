@@ -3,7 +3,7 @@ import PropTypes from "prop-types";
 import { connect } from "react-redux";
 
 import { changeHighlighted, changeExpanded } from "../../actions/settingsActions";
-import { updateFlows, FlowPopup } from "../../actions/flowHowActions";
+import { updateFlows } from "../../actions/flowHowActions";
 
 let _ = require("lodash");
 
@@ -15,7 +15,6 @@ require("../styles/FlowSummaryStyle.scss");
 
 export class Summary extends React.Component {
 	constructor(props) {
-
 		super(props);
 
 		this.state = {
@@ -31,20 +30,13 @@ export class Summary extends React.Component {
 			isHighlighted: false,
 		};
 
-		
-		window.summaryClass = this;
-
 	}
 
 	componentWillMount() {
-		console.log("componentWillMount");
-		console.log(this.props.data);
 		this.formatData(this.props.data);
 	}
 
 	componentWillReceiveProps(nextProps) {
-		console.log("componentWillReceiveProps");
-		console.log(this.props.data);
 		this.formatData(nextProps.data);
 
 		if(this.state.title === nextProps.highlighted) {
@@ -70,12 +62,6 @@ export class Summary extends React.Component {
 	}
 
 	render() {
-		console.log(this.state.targets);
-		console.log(this.state.flows);
-		console.log(this.state.sources);
-		console.log(this.state.experiences);
-		console.log(this.state.processes);
-		console.log(this.state.informations);
 		const targets = this.state.targets.map((node, i)=>{
 			return (
 				<div 
@@ -161,9 +147,10 @@ export class Summary extends React.Component {
 		const {expanded, height, isHighlighted} = this.state;
 
 		let currentHeight = expanded ? height : 0;
+
 		return (
 
-			<div onLoad={this.toggleExpand.bind(this)}
+			<div 
 				 ref="flowSummary" 
 				className = {`flow-summary ${expanded ? "" : "closed "} ${isHighlighted ? "highlighted " : ""}` }
 			 >
@@ -173,9 +160,8 @@ export class Summary extends React.Component {
 					  <span />
 					  <span />
 				</div>
-
 				<h3 className="title" onClick={this.changeTitle.bind(this)}>{this.state.title}</h3>
-				<img className="highlight-button" src={`../../assets/images/highlight-${isHighlighted ? "on.png" : "off.png"}`} alt="" onMouseDown={this.toggleHighlightCells.bind(this)}/>
+				<img className="highlight-button" src={`./assets/images/highlight-${isHighlighted ? "on.svg" : "off.svg"}`} alt="" onMouseDown={this.toggleHighlightCells.bind(this)}/>
 				<div className="summary-content" ref="contentWrapper" style={{height: currentHeight + "px"}} >
 					<div className="content-body" ref="content">
 						<h5 className="description" onClick={this.changeDesc.bind(this)}>{this.state.description}</h5>
@@ -183,9 +169,10 @@ export class Summary extends React.Component {
 							<h5 className="field-title">Target Apps</h5>
 						}
 						{targets}
-						{(experiences.length > 0 || processes.length > 0 || informations.length > 0 )&&
-							<h5 className="field-title">MicroFlows</h5>
+						{flows.length > 0 &&
+							<h5 className="field-title">Information Objects</h5>
 						}
+						{flows}
 						{experiences}
 						{processes}
 						{informations}
@@ -193,19 +180,16 @@ export class Summary extends React.Component {
 							<h5 className="field-title">Source Apps</h5>
 						}
 						{sources}
-						<div className="nodeField remove-flow" onClick={this.ShowFlowPopup.bind(this)}> 
+						<div className="nodeField remove-flow" onClick={()=>{this.props.removeFlow(this.state.title);} }> 
 							<span className="microflow-title">Remove flow</span> <br/>
 						</div>
 					</div>
 				</div>
 			</div>
 		);
-	}
-	ShowFlowPopup(){
-		var _this = this;
-		FlowPopup(_this.state.title, _this);
+	}	
 
-	}
+
 	focusCell(node) {
 		let style = node.getStyle();
 		style = style.replace(/\ hovered/g, "");
@@ -347,9 +331,6 @@ export class Summary extends React.Component {
 			const nodeID = data.nodeIDs[i];
 							
 			const node = window.graph.model.getCell(nodeID);
-			console.log(window.graph.model);
-			console.log(nodeID);
-			console.log(node);
 
 			// Node doesn't exist anymore and has probably been removed
 			if(!node || !node.value) {
@@ -418,11 +399,10 @@ export class Summary extends React.Component {
 	}
 
 	changeTitle() {
-		
 		let flows = JSON.parse(window.localStorage.flows);
 		let thisFlow = flows[this.state.title];
 		let oldTitle = thisFlow.title;
-		
+
 		const newTitle = prompt("New title", this.state.title) || this.state.title;
 		thisFlow.title = newTitle;
 		this.setState({
@@ -434,19 +414,6 @@ export class Summary extends React.Component {
 		flows[newTitle] = thisFlow;
 		
 		this.props.dispatch(updateFlows(flows));
-
-		// Update the Node title when we change the flow summary title
-
-		for(let i = 0; i < this.state.allCells.length; i++) {
-			
-			var node = this.state.allCells[i];
-			var node_title = node.getValue().getAttribute('title');
-
-			if( oldTitle == node_title && node.value.nodeName == "Flow" ){
-				const edit = new mxCellAttributeChange(node, "title", newTitle);		
-				window.graph.getModel().execute(edit);
-			}
-		}
 			
 	}
 	changeDesc() {

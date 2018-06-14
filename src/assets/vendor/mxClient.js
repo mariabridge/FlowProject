@@ -2819,10 +2819,6 @@ var mxUtils =
 		{
 			tab = tab || '  ';
 			indent = indent || '';
-			console.log("prettyxml");
-			console.log(node.nodeType);
-			console.log(mxConstants.NODETYPE_TEXT);
-			console.log("******");
 			
 			if (node.nodeType == mxConstants.NODETYPE_TEXT)
 			{
@@ -72977,6 +72973,7 @@ mxConnectionHandler.prototype.selectCells = function(edge, target)
  */
 mxConnectionHandler.prototype.insertEdge = function(parent, id, value, source, target, style)
 {
+	console.log("mxConnectionHandler insertEdge");
 	if (this.factoryMethod == null)
 	{
 		return this.graph.insertEdge(parent, id, value, source, target, style);
