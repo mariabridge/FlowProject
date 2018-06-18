@@ -305,7 +305,7 @@ module.exports = function(app, passport) {
 								int_endpoints: (flowObj.endPoints).join(),
 							},
 						    { where: { id: integration_id }} /* where criteria */
-						  );
+					/*	  );
 			}).then(function(integ) {
 				success++;
 				integration_saved = true;
