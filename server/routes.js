@@ -110,15 +110,15 @@ con.connect(function(err) {
 module.exports = function(app, passport) {
 	//const distPath = path.join(__dirname, "../dist");
 	//const indexFileName = "index.html";
-/*
+
 	const distPath = path.join(__dirname, "../src");
-	const indexFileName = "index-template.html";*/
+	const indexFileName = "index-template.html";
 
 
 	// =========================================================================
 	// FACEBOOK ================================================================
 	// =========================================================================
-/*	app.get("/auth/facebook",
+	app.get("/auth/facebook",
 	  passport.authenticate("facebook"));
 
 	app.get("/auth/facebook/callback", 
@@ -126,7 +126,7 @@ module.exports = function(app, passport) {
 	  function(req, res) {
 	    res.redirect("/");
 		}
-	);*/
+	);
 
 	// =========================================================================
 	// GOOGLE ==================================================================
