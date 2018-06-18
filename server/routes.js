@@ -111,8 +111,8 @@ module.exports = function(app, passport) {
 	//const distPath = path.join(__dirname, "../dist");
 	//const indexFileName = "index.html";
 
-	const distPath = path.join(__dirname, "../src");
-	const indexFileName = "index-template.html";
+/*	const distPath = path.join(__dirname, "../src");
+	const indexFileName = "index-template.html";*/
 
 
 	// =========================================================================
