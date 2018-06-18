@@ -1,6 +1,6 @@
 const path = require("path");
 const mysql = require('mysql');
-/*var Sequelize = require('sequelize');
+var Sequelize = require('sequelize');
 
 var sequelize = new Sequelize('flowproj', 'flowproj', 'Y7zS6ELp8rvGttdbfTK0dGEa8VmEub', {
 
@@ -8,7 +8,7 @@ var sequelize = new Sequelize('flowproj', 'flowproj', 'Y7zS6ELp8rvGttdbfTK0dGEa8
     port:'3306',
 	dialect: 'mysql'
 	
-});*/
+});
 
 /*
 *	Define Models
