@@ -102,10 +102,10 @@ const con = mysql.createConnection({
 	database: "flowproj"
 });
 
-con.connect(function(err) {
+/*con.connect(function(err) {
 	if (err) throw err;
 	console.log("Connected!");
-});
+});*/
 
 module.exports = function(app, passport) {
 	//const distPath = path.join(__dirname, "../dist");
